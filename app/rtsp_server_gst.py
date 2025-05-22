@@ -3,19 +3,19 @@ gi.require_version('Gst', '1.0')
 gi.require_version('GstRtspServer', '1.0')
 from gi.repository import Gst, GstRtspServer, GLib, GObject
 
-import cv2 # For frame to Gst.Buffer conversion if needed, or use numpy directly
+import cv2 
 import numpy as np
 import signal
-import os # For checking if running in Docker, if needed for other logic
+import os 
 
 from config_loader import load_config
 from video_utils import VideoFrameGenerator
 
-# Global state (consider encapsulating in a class if it grows)
+# Global state
 connection_count = 0
-video_generator = None # To be initialized after config
-config = None # To be initialized
-loop = None # GLib MainLoop
+video_generator = None 
+config = None 
+loop = None 
 
 def on_need_data(src, length): # src is the appsrc element
     global video_generator
@@ -24,14 +24,20 @@ def on_need_data(src, length): # src is the appsrc element
         data = frame_bgr.tobytes()
         buf = Gst.Buffer.new_allocate(None, len(data), None)
         buf.fill(0, data)
-        # Emit the "push-buffer" signal on the appsrc element
-        retval = src.emit("push-buffer", buf)
-        if retval != Gst.FlowReturn.OK:
-            print(f"Error pushing buffer via appsrc signal: {retval}")
-            # Consider also returning Gst.FlowReturn.ERROR or similar from need-data
-            # For now, returning False to stop the emission for this cycle
-            return False 
-    return True # Continue pushing / emitting need-data
+        
+        # Ensure the appsrc is still valid and not flushing
+        if src.get_state(0)[1] == Gst.State.PLAYING: # Check if appsrc is in PLAYING state
+            retval = src.emit("push-buffer", buf)
+            if retval != Gst.FlowReturn.OK:
+                # Avoid printing excessively if it's always flushing for a disconnected client
+                if retval != Gst.FlowReturn.FLUSHING:
+                     print(f"Error pushing buffer via appsrc signal: {retval}")
+                return False # Stop pushing if not OK
+        else:
+            # print("Appsrc not in playing state, skipping push-buffer") # Optional debug
+            return False # Stop if not playing
+            
+    return True # Continue emitting need-data if all good
 
 def client_connected(server, client): # client is GstRtspServer.RTSPClient
     global connection_count, video_generator
@@ -39,13 +45,10 @@ def client_connected(server, client): # client is GstRtspServer.RTSPClient
     if video_generator:
         video_generator.set_connection_count(connection_count)
     
-    # Get session and then session ID
-    session = client.get_session()
-    session_id = "N/A"
-    if session:
-        session_id = session.get_id()
+    # Use a generic client identifier for logging if session ID is problematic
+    client_id_for_log = id(client) 
     
-    print(f"Client connected (Session ID: {session_id}). Total clients: {connection_count}")
+    print(f"Client connected (Object ID: {client_id_for_log}). Total clients: {connection_count}")
     client.connect("closed", client_disconnected_callback, server)
 
 def client_disconnected_callback(client, server_obj_ref_unused): # client is GstRtspServer.RTSPClient
@@ -54,18 +57,15 @@ def client_disconnected_callback(client, server_obj_ref_unused): # client is Gst
     if video_generator:
         video_generator.set_connection_count(connection_count)
     
-    session = client.get_session()
-    session_id = "N/A"
-    if session:
-        session_id = session.get_id()
+    client_id_for_log = id(client)
         
-    print(f"Client disconnected (Session ID: {session_id}). Total clients: {connection_count}")
+    print(f"Client disconnected (Object ID: {client_id_for_log}). Total clients: {connection_count}")
 
 class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
     def __init__(self):
         GstRtspServer.RTSPMediaFactory.__init__(self)
         self.set_shared(True)
-        self.set_latency(0)
+        self.set_latency(0) 
         self.set_transport_mode(GstRtspServer.RTSPTransportMode.PLAY)
 
     def do_create_element(self, url):
@@ -89,9 +89,9 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
 
         launch_string = (
             f"appsrc name=clocksyncsrc format=time is-live=true block=true do-timestamp=true caps={caps_str} ! "
-            f"queue max-size-buffers=3 leaky=downstream ! " 
+            f"queue max-size-buffers=5 leaky=downstream ! " # Slightly larger queue
             f"{encoder_str} ! "
-            f"queue max-size-buffers=3 leaky=downstream ! " 
+            f"queue max-size-buffers=5 leaky=downstream ! " # Slightly larger queue
             f"{payloader_str}"
         )
         print(f"Using GStreamer launch string: {launch_string}")
@@ -104,17 +104,20 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
 
     def do_media_configure(self, media):
         pipeline = media.get_element()
+        if not pipeline:
+            print("ERROR: Failed to get pipeline element in media_configure")
+            return False # Indicate failure
         appsrc = pipeline.get_by_name("clocksyncsrc")
         if appsrc:
             appsrc.connect('need-data', on_need_data)
         else:
             print("ERROR: Could not find appsrc element in pipeline for media_configure.")
+            return False # Indicate failure
         return True
 
 def main():
     global config, video_generator, loop 
     
-    # GObject.threads_init() is deprecated and no longer needed.
     Gst.init(None)
 
     config = load_config()
@@ -168,6 +171,11 @@ def main():
         print("Loop interrupted by user.")
     finally:
         print("Shutting down server...")
+        # Consider explicitly detaching the server from the main context if server_id > 0
+        # if server_id > 0:
+        #    GLib.source_remove(server_id) # Requires server_id to be stored if detaching this way
+        # Or server.detach() if available and appropriate.
+        # For now, loop.quit() should allow GObject to clean up.
         print("Server stopped.")
 
 if __name__ == '__main__':
