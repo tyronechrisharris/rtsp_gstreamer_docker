@@ -6,6 +6,7 @@ from gi.repository import Gst, GstRtspServer, GLib, GObject
 import cv2 # For frame to Gst.Buffer conversion if needed, or use numpy directly
 import numpy as np
 import signal
+import os # For checking if running in Docker, if needed for other logic
 
 from config_loader import load_config
 from video_utils import VideoFrameGenerator
@@ -26,8 +27,11 @@ def on_need_data(src, length):
         data = frame_bgr.tobytes()
         buf = Gst.Buffer.new_allocate(None, len(data), None)
         buf.fill(0, data)
-        buf.pts = Gst.CLOCK_TIME_NONE # Let appsrc manage timestamps if it can
-        buf.duration = Gst.CLOCK_TIME_NONE
+        # Timestamps: It's often better to let GStreamer handle timestamps if possible,
+        # especially with appsrc's do-timestamp=true.
+        # If you set PTS manually, you need to manage it carefully.
+        # buf.pts = Gst.CLOCK_TIME_NONE # Let appsrc manage timestamps
+        # buf.duration = Gst.CLOCK_TIME_NONE # Or calculate based on FPS
         retval = src.push_buffer(buf)
         if retval != Gst.FlowReturn.OK:
             print(f"Error pushing buffer to appsrc: {retval}")
@@ -51,10 +55,14 @@ def client_disconnected_callback(client, server_obj_ref_unused): # server_obj_re
     print(f"Client disconnected (ID: {client.get_session_id()}). Total clients: {connection_count}")
 
 
-class ClockServerMediaFactory(GstRtspServer.MediaFactory):
+# Corrected base class from MediaFactory to RTSPMediaFactory
+class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
     def __init__(self):
-        GstRtspServer.MediaFactory.__init__(self)
+        # Corrected __init__ call
+        GstRtspServer.RTSPMediaFactory.__init__(self)
         self.set_shared(True) # Single pipeline for all clients
+        self.set_latency(0) # Optional: try to reduce latency
+        self.set_transport_mode(GstRtspServer.RTSPTransportMode.PLAY) # Ensure it's for PLAY
 
     def do_create_element(self, url):
         global config, video_generator # Access global config and generator
@@ -64,59 +72,66 @@ class ClockServerMediaFactory(GstRtspServer.MediaFactory):
         codec = config.get("videoCodec").lower()
         h264_gop = config.get("h264IFrameInterval")
         
-        # Caps for appsrc: BGR format from OpenCV
-        # Note: GStreamer might be faster if OpenCV generates in a format closer to what x264enc prefers (e.g., I420)
-        # but videoconvert can handle the BGR -> I420 (or other) conversion.
         caps_str = f"video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1"
 
         if codec == "h264":
-            # key-int-max is GOP size
-            encoder_str = f"videoconvert ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=1024 key-int-max={h264_gop}"
+            encoder_str = f"videoconvert ! video/x-raw,format=I420 ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=1024 key-int-max={h264_gop}"
             payloader_str = "rtph264pay name=pay0 pt=96"
         elif codec == "mjpeg":
-            encoder_str = "videoconvert ! jpegenc quality=80" # Adjust quality as needed
+            encoder_str = "videoconvert ! jpegenc quality=80" 
             payloader_str = "rtpjpegpay name=pay0 pt=26"
         else:
-            raise ValueError(f"Unsupported video codec: {codec}")
+            print(f"ERROR: Unsupported video codec: {codec}")
+            return None # Return None on error
 
-        # Full pipeline string
-        # appsrc needs `is-live=true` and `do-timestamp=true` can be useful if not setting PTS manually
-        # `block=true` makes appsrc block in push_buffer if queue is full, good for live sources
-        # Added queue elements for buffering between threads/elements
         launch_string = (
-            f"appsrc name=clocksyncsrc format=time is-live=true block=true caps={caps_str} ! "
-            f"queue max-size-buffers=2 leaky=downstream ! " # Add queue after appsrc
+            f"appsrc name=clocksyncsrc format=time is-live=true block=true do-timestamp=true caps={caps_str} ! "
+            f"queue max-size-buffers=3 leaky=downstream ! " 
             f"{encoder_str} ! "
-            f"queue max-size-buffers=2 leaky=downstream ! " # Add queue before payloader
+            f"queue max-size-buffers=3 leaky=downstream ! " 
             f"{payloader_str}"
         )
         print(f"Using GStreamer launch string: {launch_string}")
-        return Gst.parse_launch(launch_string)
+        try:
+            element = Gst.parse_launch(launch_string)
+            return element
+        except GLib.Error as e:
+            print(f"Error parsing GStreamer launch string: {e}")
+            return None
+
 
     def do_media_configure(self, media):
-        # Get the appsrc element and connect 'need-data'
         pipeline = media.get_element()
         appsrc = pipeline.get_by_name("clocksyncsrc")
         if appsrc:
+            # Set stream type to seekable if needed, though for live it's usually not.
+            # appsrc.set_property("stream-type", 0) # 0 for GstAppStreamType.STREAM (continuous)
+            # appsrc.set_property("max-bytes", 0) # No limit
+            # appsrc.set_property("min-latency", 0)
             appsrc.connect('need-data', on_need_data)
+            # appsrc.connect('enough-data', lambda src: print("Appsrc has enough data")) # Optional debug
+            # appsrc.connect('seek-data', lambda src, offset: print(f"Appsrc seek data to {offset}")) # Optional debug
         else:
             print("ERROR: Could not find appsrc element in pipeline for media_configure.")
         # No specific media configure needed for appsrc beyond this for this example
+        return True # Must return True on success
 
 
 def main():
-    global config, video_generator, loop # Allow modification of globals
+    global config, video_generator, loop 
 
-    GObject.threads_init() # Safe for GStreamer and GLib multi-threading
+    # Check if GObject threads are already initialized, which might be the case in some environments
+    if not GLib.threads_check():
+        GObject.threads_init() 
+    
     Gst.init(None)
 
     config = load_config()
     video_generator = VideoFrameGenerator(config)
-    video_generator.set_connection_count(connection_count) # Initial count
+    video_generator.set_connection_count(connection_count) 
 
     loop = GLib.MainLoop()
 
-    # Setup signal handler for graceful shutdown
     def signal_handler(sig, frame):
         print("\nCaught signal, shutting down gracefully...")
         loop.quit()
@@ -126,7 +141,7 @@ def main():
 
     server = GstRtspServer.Server()
     server.set_address(config.get("serverIPAddress"))
-    server.set_service(str(config.get("serverPort"))) # Port must be a string
+    server.set_service(str(config.get("serverPort"))) 
 
     mounts = server.get_mount_points()
     if not mounts:
@@ -137,26 +152,34 @@ def main():
     mount_path = config.get("rtspStreamPath")
     mounts.add_factory(mount_path, factory)
 
-    # Authentication
     auth = None
     if config.get("viewerUsername") and config.get("viewerPassword"):
         auth = GstRtspServer.Auth()
-        token = GstRtspServer.Token()
-        token.set_string("username", config.get("viewerUsername"))
-        token.set_string("password", config.get("viewerPassword"))
-        # BasicAuth is simple, DigestAuth is more secure if client supports
-        basic_auth = GstRtspServer.AuthBasic() # You could use Digest: GstRtspServer.AuthDigest.new_from_data(...)
-        auth.set_basic_credentials_callback(lambda cred, user_data: basic_auth, None) # Simplified
+        # Using a simple callback for Basic authentication
+        def basic_auth_check(credentials, user_data):
+            # This function will be called by GstRtspServer.Auth
+            # It needs to return a GstRtspServer.AuthBasic object if credentials are valid
+            # or None if invalid.
+            # For simplicity, we're pre-populating the token and letting GstRtspServer.Auth manage it.
+            # This callback is more for dynamic credential checking from a database, etc.
+            # The add_basic_watch method is simpler for static credentials.
+            return GstRtspServer.AuthBasic() # This is a placeholder, add_basic_watch is used
+
+        # This is a more direct way for static credentials with Basic Auth
+        # Create a token with the credentials
+        token = GstRtspServer.RTSPToken() # Use RTSPToken
+        token.set_string("media.factory.role", "user") # Example role
+        # No direct set_string for username/password on token for basic auth check this way
+        
+        # The add_basic_watch method is simpler for static credentials
         auth.add_basic_watch(config.get("viewerUsername"), config.get("viewerPassword"))
         server.set_auth(auth)
         print(f"Authentication enabled for user: {config.get('viewerUsername')}")
 
 
-    # Connect client signals
     server.connect("client-connected", client_connected)
-    # Note: client_disconnected is handled by connecting to the 'closed' signal of each client instance.
-
-    server_id = server.attach(None) # Attach to default GLib main context
+    
+    server_id = server.attach(None) 
     if server_id == 0:
         print("ERROR: Failed to attach RTSP server to main context.")
         return
@@ -171,8 +194,7 @@ def main():
         print("Loop interrupted by user.")
     finally:
         print("Shutting down server...")
-        # GLib.Source.remove(server_id) # Not strictly necessary if loop.quit() is used
-        # Cleanup if needed, though GObject usually handles its own destruction.
+        # server.detach() # Detach from main context if server_id > 0
         print("Server stopped.")
 
 if __name__ == '__main__':
