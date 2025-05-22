@@ -1,6 +1,6 @@
 {
-    "viewerUsername": "user",
-    "viewerPassword": "password",
+    "viewerUsername": "",
+    "viewerPassword": "",
     "serverIPAddress": "0.0.0.0",
     "serverPort": 8554,
     "videoCodec": "h264",

@@ -153,7 +153,7 @@ The easiest way to run the server is by using the provided launch scripts. These
   * **For macOS/Linux**:
 
     ```bash
-    chmod +x launch.sh  # Make executable (if needed)
+    chmod +x launch.sh
     ./launch.sh
     ```
 
