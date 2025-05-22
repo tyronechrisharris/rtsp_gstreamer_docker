@@ -120,9 +120,10 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
 def main():
     global config, video_generator, loop 
 
-    # Check if GObject threads are already initialized, which might be the case in some environments
-    if not GLib.threads_check():
-        GObject.threads_init() 
+    # Initialize GObject thread support.
+    # GObject.threads_init() should be called before any GObjects are created
+    # or any GLib/GObject functions are called from threads other than the main one.
+    GObject.threads_init() 
     
     Gst.init(None)
 
