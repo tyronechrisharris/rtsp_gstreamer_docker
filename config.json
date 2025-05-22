@@ -1,0 +1,11 @@
+{
+    "viewerUsername": "user",
+    "viewerPassword": "password",
+    "serverIPAddress": "0.0.0.0",
+    "serverPort": 8554,
+    "videoCodec": "h264",
+    "videoResolution": "1280x720",
+    "framesPerSecond": 25,
+    "h264IFrameInterval": 50,
+    "rtspStreamPath": "/live"
+}
