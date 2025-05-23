@@ -4,7 +4,7 @@
     "serverIPAddress": "0.0.0.0",
     "serverPort": 8554,
     "videoCodec": "h264",
-    "videoResolution": "1280x720",
+    "videoResolution": "640x480",
     "framesPerSecond": 15,
     "h264IFrameInterval": 15,
     "rtspStreamPath": "/live"
