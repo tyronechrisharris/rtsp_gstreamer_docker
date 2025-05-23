@@ -9,7 +9,7 @@ DEFAULT_CONFIG = {
     "videoCodec": "h264", # "mjpeg" or "h264"
     "videoResolution": "640x480",
     "framesPerSecond": 15,
-    "h264IFrameInterval": 30, # In frames (GOP size)
+    "h264IFrameInterval": 15, # In frames (GOP size)
     "rtspStreamPath": "/live"
 }
 
