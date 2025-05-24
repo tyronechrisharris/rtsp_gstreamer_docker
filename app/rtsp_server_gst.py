@@ -8,7 +8,8 @@ import numpy as np
 import signal
 import os 
 
-from config_loader import load_config
+# Updated to use load_config_from_env
+from config_loader import load_config_from_env
 from video_utils import VideoFrameGenerator
 
 # Global state
@@ -69,10 +70,10 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
         self.set_transport_mode(GstRtspServer.RTSPTransportMode.PLAY)
 
     def do_create_element(self, url):
-        global config
+        global config # config is now loaded from env by main()
         width, height = map(int, config.get("videoResolution").split('x'))
         fps = config.get("framesPerSecond")
-        codec = config.get("videoCodec").lower()
+        codec = config.get("videoCodec").lower() # .lower() already handled in config_loader
         h264_gop = config.get("h264IFrameInterval")
         
         caps_str = f"video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1"
@@ -84,14 +85,15 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
             encoder_str = "videoconvert ! jpegenc quality=80" 
             payloader_str = "rtpjpegpay name=pay0 pt=26"
         else:
-            print(f"ERROR: Unsupported video codec: {codec}")
+            # This case should ideally be caught by config_loader validation
+            print(f"ERROR: Unsupported video codec in do_create_element: {codec}")
             return None
 
         launch_string = (
             f"appsrc name=clocksyncsrc format=time is-live=true block=true do-timestamp=true caps={caps_str} ! "
-            f"queue max-size-buffers=5 leaky=downstream ! " # Slightly larger queue
+            f"queue max-size-buffers=5 leaky=downstream ! " 
             f"{encoder_str} ! "
-            f"queue max-size-buffers=5 leaky=downstream ! " # Slightly larger queue
+            f"queue max-size-buffers=5 leaky=downstream ! " 
             f"{payloader_str}"
         )
         print(f"Using GStreamer launch string: {launch_string}")
@@ -106,28 +108,31 @@ class ClockServerMediaFactory(GstRtspServer.RTSPMediaFactory):
         pipeline = media.get_element()
         if not pipeline:
             print("ERROR: Failed to get pipeline element in media_configure")
-            return False # Indicate failure
+            return False 
         appsrc = pipeline.get_by_name("clocksyncsrc")
         if appsrc:
             appsrc.connect('need-data', on_need_data)
         else:
             print("ERROR: Could not find appsrc element in pipeline for media_configure.")
-            return False # Indicate failure
+            return False 
         return True
 
 def main():
     global config, video_generator, loop 
     
-    Gst.init(None)
+    Gst.init(None) # Initialize GStreamer
 
-    config = load_config()
-    video_generator = VideoFrameGenerator(config)
-    video_generator.set_connection_count(connection_count) 
+    # Load configuration from environment variables
+    config = load_config_from_env()
+    
+    # Initialize VideoFrameGenerator with the loaded configuration
+    video_generator = VideoFrameGenerator(config) 
+    video_generator.set_connection_count(connection_count) # Set initial count
 
     loop = GLib.MainLoop()
 
     def signal_handler(sig, frame):
-        print("\nCaught signal, shutting down gracefully...")
+        print("\\nCaught signal, shutting down gracefully...")
         if loop and loop.is_running():
             loop.quit()
 
@@ -148,6 +153,7 @@ def main():
     mounts.add_factory(mount_path, factory)
 
     auth = None
+    # Check for viewerUsername from the config dictionary
     if config.get("viewerUsername") and config.get("viewerPassword"):
         auth = GstRtspServer.RTSPAuth()
         auth.add_basic_watch(config.get("viewerUsername"), config.get("viewerPassword"))
@@ -161,8 +167,8 @@ def main():
         print("ERROR: Failed to attach RTSP server to main context.")
         return
 
-    print(f"RTSP Server started on rtsp://{config.get('serverIPAddress')}:{config.get('serverPort')}{mount_path}")
-    if config.get("viewerUsername"):
+    print(f"RTSP Server started on rtsp://{config.get('serverIPAddress')}:{config.get('serverPort')}{config.get('rtspStreamPath')}")
+    if config.get("viewerUsername"): # Check again for the print message
         print(f"Connect with username: {config.get('viewerUsername')}")
 
     try:
@@ -171,11 +177,6 @@ def main():
         print("Loop interrupted by user.")
     finally:
         print("Shutting down server...")
-        # Consider explicitly detaching the server from the main context if server_id > 0
-        # if server_id > 0:
-        #    GLib.source_remove(server_id) # Requires server_id to be stored if detaching this way
-        # Or server.detach() if available and appropriate.
-        # For now, loop.quit() should allow GObject to clean up.
         print("Server stopped.")
 
 if __name__ == '__main__':
