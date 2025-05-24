@@ -98,7 +98,7 @@ rtsp_gstreamer_docker/
 
 Open your terminal or command prompt and clone the project:
 ```bash
-git clone [https://github.com/tyronechrisharris/rtsp_gstreamer_docker.git](https://github.com/tyronechrisharris/rtsp_gstreamer_docker.git)
+git clone https://github.com/tyronechrisharris/rtsp_gstreamer_docker.git
 cd rtsp_gstreamer_docker
 
 ```
