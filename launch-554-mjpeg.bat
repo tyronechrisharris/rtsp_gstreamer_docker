@@ -12,13 +12,14 @@ set RTSP_SERVER_PORT=554
 set RTSP_VIDEO_CODEC=mjpeg
 set RTSP_VIDEO_RESOLUTION=640x480
 set RTSP_FPS=15
+REM # The H264 GOP setting is still passed but will be ignored by the app when codec is mjpeg
 set RTSP_H264_GOP=15
 set RTSP_STREAM_PATH=/live
 
 REM # --- End Configuration Section ---
 
-REM Set the public Docker Hub image name
-set "DOCKER_IMAGE_NAME=harristc825/rtsp-clock-server:latest"
+REM Set the local Docker image name. We no longer rely on pulling from Docker Hub.
+set "DOCKER_IMAGE_NAME=rtsp-clock-server:latest"
 
 echo Configuration for this specific launch:
 echo   RTSP_SERVER_PORT:     "%RTSP_SERVER_PORT%"
@@ -28,17 +29,18 @@ echo.
 echo Attempting to map host port %RTSP_SERVER_PORT% to container port %RTSP_SERVER_PORT% (RTSP).
 echo.
 
-REM Check if the Docker image is available locally, if not, pull it.
+REM Check if the Docker image is available locally, if not, BUILD it from source.
 echo DEBUG: Checking for Docker image %DOCKER_IMAGE_NAME%...
 docker image inspect %DOCKER_IMAGE_NAME% >nul 2>nul
 if errorlevel 1 (
-  echo Docker image %DOCKER_IMAGE_NAME% not found locally. Attempting to pull from Docker Hub...
-  docker pull %DOCKER_IMAGE_NAME%
+  echo Docker image %DOCKER_IMAGE_NAME% not found locally. Building from the Dockerfile...
+  docker build -t %DOCKER_IMAGE_NAME% .
   if errorlevel 1 (
-    echo Docker pull failed. Please ensure the image name is correct and you are logged in.
+    echo Docker build failed. Please check the Dockerfile and ensure Docker is running correctly.
     pause
     exit /b 1
   )
+  echo Build successful.
 )
 
 echo.
