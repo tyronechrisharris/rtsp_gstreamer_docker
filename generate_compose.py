@@ -1,5 +1,5 @@
 services = []
-for i, port in enumerate(range(8551, 8601), start=1):
+for i, port in enumerate(range(8551, 8652), start=1):
     services.append(f"""
   cam{i}:
     image: rtsp_gstreamer_docker
