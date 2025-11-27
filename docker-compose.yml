@@ -1,0 +1,503 @@
+version: '3.9'
+services:
+
+  cam1:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8551:8554"
+
+  cam2:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8552:8554"
+
+  cam3:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8553:8554"
+
+  cam4:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8554:8554"
+
+  cam5:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8555:8554"
+
+  cam6:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8556:8554"
+
+  cam7:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8557:8554"
+
+  cam8:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8558:8554"
+
+  cam9:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8559:8554"
+
+  cam10:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8560:8554"
+
+  cam11:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8561:8554"
+
+  cam12:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8562:8554"
+
+  cam13:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8563:8554"
+
+  cam14:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8564:8554"
+
+  cam15:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8565:8554"
+
+  cam16:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8566:8554"
+
+  cam17:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8567:8554"
+
+  cam18:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8568:8554"
+
+  cam19:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8569:8554"
+
+  cam20:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8570:8554"
+
+  cam21:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8571:8554"
+
+  cam22:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8572:8554"
+
+  cam23:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8573:8554"
+
+  cam24:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8574:8554"
+
+  cam25:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8575:8554"
+
+  cam26:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8576:8554"
+
+  cam27:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8577:8554"
+
+  cam28:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8578:8554"
+
+  cam29:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8579:8554"
+
+  cam30:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8580:8554"
+
+  cam31:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8581:8554"
+
+  cam32:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8582:8554"
+
+  cam33:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8583:8554"
+
+  cam34:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8584:8554"
+
+  cam35:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8585:8554"
+
+  cam36:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8586:8554"
+
+  cam37:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8587:8554"
+
+  cam38:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8588:8554"
+
+  cam39:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8589:8554"
+
+  cam40:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8590:8554"
+
+  cam41:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8591:8554"
+
+  cam42:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8592:8554"
+
+  cam43:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8593:8554"
+
+  cam44:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8594:8554"
+
+  cam45:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8595:8554"
+
+  cam46:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8596:8554"
+
+  cam47:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8597:8554"
+
+  cam48:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8598:8554"
+
+  cam49:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8599:8554"
+
+  cam50:
+    image: rtsp_gstreamer_docker
+    environment:
+      RTSP_PORT: 8554
+      FPS: 5
+      WIDTH: 640
+      HEIGHT: 480
+    ports:
+      - "8600:8554"
+
